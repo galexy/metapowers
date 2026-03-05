@@ -1,0 +1,88 @@
+# Metapowers Default Configuration
+#
+# This file wires together the loop structure, strategy skills, and state
+# adapters. Copy this to `metapowers.yml` in your project root to customize.
+#
+# The loop engine reads this config to determine:
+#   1. Which strategy skill to invoke at each phase (strategies)
+#   2. Where and how to store artifacts (adapters)
+#   3. Project-level metadata (project)
+
+# ---------------------------------------------------------------------------
+# Strategy Skills
+#
+# Maps each loop.phase to a skill name. The loop engine invokes the named
+# skill when it enters that phase. To swap a strategy, change the skill name.
+#
+# Format: loop.phase: "plugin:skill-name"
+# ---------------------------------------------------------------------------
+strategies:
+  release.envision:     "metapowers:prfaq-author"
+  # release.plan:       "metapowers:release-planning"       # not yet implemented
+  # release.integrate:  "metapowers:release-integration"    # not yet implemented
+  # release.ship:       "metapowers:release-delivery"       # not yet implemented
+
+  # planning.decompose:   "metapowers:epic-story-decomposition"
+  # planning.analyze:     "metapowers:dependency-analysis"
+  # planning.prioritize:  "metapowers:work-prioritization"
+  # planning.execute:     "metapowers:story-dispatch"
+  # planning.review:      "metapowers:progress-review"
+
+  # execution.design:     "metapowers:story-design"
+  # execution.implement:  "metapowers:story-implement"
+  # execution.verify:     "metapowers:story-verify"
+  # execution.complete:   "metapowers:story-complete"
+
+# ---------------------------------------------------------------------------
+# State Adapters
+#
+# Maps each artifact type to a storage backend and its configuration.
+# The loop engine reads this to know where to persist artifacts produced
+# by strategy skills.
+#
+# Supported adapter types:
+#   - markdown_files:  Read/write markdown files at a path template
+#   - github_issues:   (future) Create/update GitHub Issues
+#   - linear:          (future) Create/update Linear tickets
+#
+# Path templates support these variables:
+#   {release_name}  - Name/slug of the current release
+#   {epic_name}     - Name/slug of the current epic
+#   {story_id}      - Identifier of the current story
+#   {date}          - Current date in YYYY-MM-DD format
+# ---------------------------------------------------------------------------
+adapters:
+  prfaq:
+    type: markdown_files
+    path_template: "docs/releases/{release_name}/prfaq.md"
+
+  release_plan:
+    type: markdown_files
+    path_template: "docs/releases/{release_name}/release-plan.md"
+
+  epic:
+    type: markdown_files
+    path_template: "docs/releases/{release_name}/epics/{epic_name}.md"
+
+  story:
+    type: markdown_files
+    path_template: "docs/releases/{release_name}/stories/{story_id}.md"
+
+  design_doc:
+    type: markdown_files
+    path_template: "docs/releases/{release_name}/design/{date}-{doc_name}.md"
+
+  test_spec:
+    type: markdown_files
+    path_template: "docs/releases/{release_name}/test-specs/{doc_name}.md"
+
+  decision:
+    type: markdown_files
+    path_template: "docs/decisions/{date}-{doc_name}.md"
+
+# ---------------------------------------------------------------------------
+# Project Metadata
+# ---------------------------------------------------------------------------
+project:
+  name: ""
+  releases_dir: "docs/releases"

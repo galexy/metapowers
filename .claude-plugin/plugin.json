@@ -1,0 +1,11 @@
+{
+  "name": "metapowers",
+  "description": "A framework for AI-assisted software development with pluggable strategies, configurable state adapters, and nested feedback loops",
+  "version": "0.1.0",
+  "author": {
+    "name": "galexy"
+  },
+  "repository": "https://github.com/galexy/metapowers",
+  "license": "MIT",
+  "keywords": ["framework", "sdlc", "pluggable", "strategies", "nested-loops"]
+}
