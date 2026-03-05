@@ -1,0 +1,12 @@
+{
+  "name": "metapowers",
+  "version": "0.1.0",
+  "description": "A framework for an agent driven SDLC that allows for process customization",
+  "author": {
+    "name": "Galex Yen",
+    "email": "galexy@user.noreply.github.com",
+    "url": "https://github.com/galexy",
+  },
+  "repository": "https://github.com/author/plugin",
+  "license": "MIT"
+}
