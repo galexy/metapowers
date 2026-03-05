@@ -2,7 +2,6 @@
 name: implement-story
 description: Implement a user story or feature by coordinating a coder and tester through design, implementation with TDD, multi-area code review, and PR creation. Use when the user wants to implement a story, feature, or task from beads.
 argument-hint: [beads-issue-id]
-disable-model-invocation: true
 ---
 
 # Implement Story Workflow
