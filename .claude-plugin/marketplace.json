@@ -1,0 +1,15 @@
+{
+  "name": "metapowers",
+  "owner": {
+    "name": "Galex Yen",
+    "email": "galexy@users.noreply.github.com"
+  },
+  "plugins": [
+    {
+      "name": "metapowers",
+      "source": "./plugins/metapowers",
+      "description": "Skills and agents to help implement a customizable agent driven SDLC",
+      "version": "0.1.0"
+    }
+  ]
+}
