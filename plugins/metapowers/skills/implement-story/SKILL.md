@@ -38,10 +38,10 @@ Confirm the skill reports that context was stored in the issue before proceeding
    ```
    Link as children of `$ARGUMENTS`. Make the PR task blocked by both design tasks.
 
-3. Create a working branch and worktree:
+3. Create a **design branch** and worktree:
    ```bash
-   git worktree add /tmp/<story-branch> -b <story-branch>
-   cd /tmp/<story-branch> && pnpm install
+   git worktree add /tmp/<story>-design -b <story>/design
+   cd /tmp/<story>-design && pnpm install
    ```
 
 ### Launch Design Agents
@@ -51,7 +51,7 @@ Launch two agents in parallel (`subagent_type: "general-purpose"`, `mode: "bypas
 **Coder Agent** — writes the implementation design:
 
 The coder's prompt MUST instruct them to:
-- Work in `/tmp/<story-branch>`
+- Work in `/tmp/<story>-design`
 - Claim their beads design task
 - Read the architecture docs, existing code, and types relevant to the story
 - Write a design document at a specified path (e.g., `.specs/<story>/implementation-design.md`) covering:
@@ -69,7 +69,7 @@ The coder's prompt MUST instruct them to:
 **Tester Agent** — writes the test plan:
 
 The tester's prompt MUST instruct them to:
-- Work in `/tmp/<story-branch>`
+- Work in `/tmp/<story>-design`
 - Claim their beads design task
 - Read the architecture docs, existing code, existing tests, and the story's acceptance criteria
 - Write a test plan at a specified path (e.g., `.specs/<story>/test-plan.md`) covering:
@@ -116,9 +116,12 @@ Once both design docs are committed:
    ```
    Link as children of `$ARGUMENTS`.
 
-2. The implementation happens on the same branch as the design docs (or a new branch if preferred). Pre-create a worktree if the old one was cleaned up:
+2. After the design PR is merged, clean up the design worktree and create a new **implementation branch** from main:
    ```bash
-   git worktree add /tmp/<story-branch> -b <story-branch>
+   git worktree remove /tmp/<story>-design
+   git pull origin main
+   git worktree add /tmp/<story>-impl -b <story>/impl
+   cd /tmp/<story>-impl && pnpm install
    ```
 
 ### Launch Implementation Agents
@@ -128,7 +131,7 @@ Launch two agents in parallel. Both work in the same worktree — coordinate via
 **Coder Agent** — implements with TDD discipline:
 
 The coder's prompt MUST instruct them to:
-- Work in `/tmp/<story-branch>`
+- Work in `/tmp/<story>-impl`
 - Read the implementation design doc and test plan first
 - Claim their beads implementation task
 - **Follow TDD — write tests BEFORE code, incrementally:**
@@ -147,7 +150,7 @@ The coder's prompt MUST instruct them to:
 **Tester Agent** — develops integration and e2e tests:
 
 The tester's prompt MUST instruct them to:
-- Work in `/tmp/<story-branch>`
+- Work in `/tmp/<story>-impl`
 - Read the test plan first
 - Claim their beads test task
 - Begin writing integration and e2e tests based on the test plan
@@ -271,7 +274,7 @@ Once the user approves and merges the PR:
 
 1. Shut down all agents.
 2. Delete the team via TeamDelete.
-3. Remove worktrees: `git worktree remove /tmp/<name>`
+3. Remove any remaining worktrees: `git worktree remove /tmp/<story>-design` and `git worktree remove /tmp/<story>-impl`
 4. Push final beads state to main.
 5. Verify: `git status` shows clean, up to date with origin.
 
