@@ -57,23 +57,41 @@ Read and investigate the codebase directly (you are already running in a forked 
 
 1. **Referenced documents** — Read any architecture docs, specs, PRDs, or parent issues linked from the issue.
 2. **Relevant code areas** — Identify and read the key source files, modules, types, and interfaces that the issue touches or depends on.
-3. **Existing patterns and conventions** — Note naming conventions, error handling patterns, test patterns, and project structure conventions observed in the relevant code.
-4. **Dependencies** — Identify internal modules and external libraries involved.
-5. **Existing tests** — Find and read test files related to the affected code areas to understand current coverage and test style.
+3. **Dependencies** — Identify internal modules and external libraries involved.
+4. **Existing tests** — Find and read test files related to the affected code areas to understand current coverage and test style.
 
 ## Step 3: Store Context in Issue
 
 Synthesize your findings into a context brief and append it to the issue's notes wrapped in a `<task_context>` tag:
 
 ```bash
-bd note $ARGUMENTS "<task_context>
-- **Issue summary**: What needs to be done and why
-- **Affected code areas**: Key files and modules with brief descriptions of their role
-- **Relevant types and interfaces**: Important type definitions and contracts
-- **Patterns to follow**: Conventions observed in the existing code
-- **Dependencies**: Internal and external dependencies involved
-- **Test landscape**: Existing test coverage and test style in affected areas
-- **Open questions**: Anything unclear or needing user input
+bd update $ARGUMENTS --notes "<task_context>
+## Issue summary
+<What needs to be done and why>
+
+## PRD or Parent Issue context
+
+<The relevant section(s) from the PRD that this issue implements or context from the parent issue>
+
+## Affected code areas
+
+<Key files and modules with brief descriptions of their role>
+
+## Relevant types and interfaces
+
+<Important type definitions and contracts>
+
+## Dependencies
+
+<Internal and external dependencies involved>
+
+## Test landscape
+
+<Existing test coverage and test style in affected areas>
+
+## Open questions
+
+<Anything unclear or needing user input>
 </task_context>"
 ```
 
