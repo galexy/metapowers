@@ -10,12 +10,19 @@ Implement the beads issue `$ARGUMENTS` by coordinating a coder and tester throug
 
 ---
 
+## Requirements
+
+Run `bd show $ARGUMENTS` and verify the following before proceeding. If any requirement is not met, report the corresponding error (see Common Issues) and stop.
+
+- **Claimable status** — The issue's status must be claimable (e.g., `open`, `backlog`, or `todo`). If the issue is already `in_progress`, `done`, `closed`, or otherwise not claimable, report an error.
+
+---
+
 ## Phase 0: Context Gathering
 
-1. Run `bd show $ARGUMENTS` to understand the task, its dependencies, parent epic, and acceptance criteria.
-2. Read any referenced architecture docs, specs, PRD, or parent issues.
-3. Identify the relevant codebase areas — read key files to understand existing patterns, conventions, and types.
-4. Claim the issue: `bd update $ARGUMENTS --status=in_progress`
+Run the `gather-context` skill with `$ARGUMENTS`. This runs in a forked Explore context and stores a `<task_context>` brief in the beads issue notes.
+
+Confirm the skill reports that context was stored in the issue before proceeding to Phase 1.
 
 ## Phase 1: Design Collaboration
 
@@ -280,3 +287,13 @@ Once the user approves and merges the PR:
 - **Tests must be executed** during review — not just read, but run
 - Design phase gates on user PR approval before implementation begins
 - Coder and tester must collaborate via SendMessage, not work in isolation
+
+---
+
+## Common Issues
+
+- **Issue not claimable** — If the issue status is `in_progress`, `done`, `closed`, or any other non-claimable state, report:
+
+  > Error: Issue `$ARGUMENTS` has status `<status>` and cannot be claimed. Only issues with a claimable status (e.g., `open`, `backlog`, `todo`) can be implemented.
+
+  Do not proceed with the workflow.
