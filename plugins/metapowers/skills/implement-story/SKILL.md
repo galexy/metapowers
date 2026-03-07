@@ -30,13 +30,19 @@ Confirm the skill reports that context was stored in the issue before proceeding
 
 1. Create a team via TeamCreate.
 
-2. Create beads subtasks:
+2. Create beads subtasks and link them as children of `$ARGUMENTS`:
    ```bash
    bd create --title="Design: Implementation plan for <story>" --description="<details>" --type=task --priority=1
+   bd dep add <impl-plan-id> $ARGUMENTS --type=parent-child
+
    bd create --title="Design: Test plan for <story>" --description="<details>" --type=task --priority=1
+   bd dep add <test-plan-id> $ARGUMENTS --type=parent-child
+
    bd create --title="Design: PR for review" --description="Gate design completion on PR approval" --type=task --priority=1
+   bd dep add <pr-id> $ARGUMENTS --type=parent-child
+   bd dep add <pr-id> <impl-plan-id> --type=blocks
+   bd dep add <pr-id> <test-plan-id> --type=blocks
    ```
-   Link as children of `$ARGUMENTS`. Make the PR task blocked by both design tasks.
 
 3. Create a **design branch** and worktree:
    ```bash
@@ -109,12 +115,14 @@ Once both design docs are committed:
 
 ### Setup
 
-1. Create beads subtasks for implementation:
+1. Create beads subtasks and link them as children of `$ARGUMENTS`:
    ```bash
    bd create --title="Implement: <story>" --description="<details, reference design doc>" --type=task --priority=1
+   bd dep add <impl-id> $ARGUMENTS --type=parent-child
+
    bd create --title="Test: <story>" --description="<details, reference test plan>" --type=task --priority=1
+   bd dep add <test-id> $ARGUMENTS --type=parent-child
    ```
-   Link as children of `$ARGUMENTS`.
 
 2. After the design PR is merged, clean up the design worktree and create a new **implementation branch** from main:
    ```bash
