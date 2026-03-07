@@ -8,6 +8,66 @@ argument-hint: [beads-issue-id]
 
 Implement the beads issue `$ARGUMENTS` by coordinating a coder and tester through design collaboration, TDD implementation, code review, and PR creation.
 
+```mermaid
+flowchart TB
+  bd_show["bd show issue"]
+  claimable{"Claimable?"}
+  error["Error: not claimable"]
+  gather["Phase 0\nGather Context\n(Explorer Agent)"]
+
+  subgraph phase1 ["Phase 1: Design Collaboration"]
+    design_setup["Create team, subtasks,\nbranch & worktree"]
+    design_agents["Launch Coder +\nTester Agents\n(parallel)"]
+    design_collab["Design Feedback Loop\nCoder ↔ Tester\nvia SendMessage"]
+    design_pr["Create Design PR"]
+    design_review{"User Reviews\nDesign PR"}
+    design_relay["PR Feedback Relay\nAgents read comments,\nfix & reply"]
+
+    design_setup --> design_agents
+    design_agents --> design_collab
+    design_collab --> design_pr
+    design_pr --> design_review
+    design_review -- "comments" --> design_relay
+    design_relay --> design_review
+  end
+
+  subgraph phase2 ["Phase 2: TDD Implementation"]
+    impl_setup["Shut down design agents,\nnew branch & worktree"]
+    impl_agents["Launch Coder +\nTester Agents\n(parallel, TDD)"]
+    impl_collab["Impl Coordination\nCoder ↔ Tester\nvia SendMessage"]
+
+    impl_setup --> impl_agents
+    impl_agents --> impl_collab
+  end
+
+  code_review["Phase 3: Code Review\n3 Review Agents\n(parallel)"]
+  has_fixes{"MUST FIX\nissues?"}
+  fix_cycle["Phase 4: Fix Cycle\nDispatch fixes to\nCoder + Tester"]
+
+  impl_pr["Phase 5\nCreate Impl PR"]
+  impl_review{"User Reviews\nImpl PR"}
+  impl_relay["PR Feedback Relay\nAgents read comments,\nfix & reply"]
+
+  resolution["Phase 6: Resolution\nClose subtasks"]
+  cleanup["Phase 7: Cleanup\nShut down agents,\ndelete team & worktrees"]
+
+  bd_show --> claimable
+  claimable -- "no" --> error
+  claimable -- "yes" --> gather
+  gather --> phase1
+  phase1 -- "approved\n& merged" --> phase2
+  impl_collab --> code_review
+  code_review --> has_fixes
+  has_fixes -- "yes" --> fix_cycle
+  fix_cycle -- "re-review" --> code_review
+  has_fixes -- "no" --> impl_pr
+  impl_pr --> impl_review
+  impl_review -- "comments" --> impl_relay
+  impl_relay --> impl_review
+  impl_review -- "approved\n& merged" --> resolution
+  resolution --> cleanup
+```
+
 ---
 
 ## Requirements
@@ -20,7 +80,17 @@ Run `bd show $ARGUMENTS` and verify the following before proceeding. If any requ
 
 ## Phase 0: Context Gathering
 
-Run the `gather-context` skill with `$ARGUMENTS`. This runs in a forked Explore context and stores a `<task_context>` brief in the beads issue notes.
+Invoke the `gather-context` skill explicitly using the Skill tool:
+
+```
+Skill(
+  name: "gather-context",
+  arguments: "$ARGUMENTS",
+  subagent_type: "Explore"
+)
+```
+
+This runs in a separate Explore agent context and stores a `<task_context>` brief in the beads issue notes.
 
 Confirm the skill reports that context was stored in the issue before proceeding to Phase 1.
 
@@ -31,6 +101,7 @@ Confirm the skill reports that context was stored in the issue before proceeding
 1. Create a team via TeamCreate.
 
 2. Create beads subtasks and link them as children of `$ARGUMENTS`:
+
    ```bash
    bd create --title="Design: Implementation plan for <story>" --description="<details>" --type=task --priority=1
    bd dep add <impl-plan-id> $ARGUMENTS --type=parent-child
@@ -54,9 +125,12 @@ Confirm the skill reports that context was stored in the issue before proceeding
 
 Launch two agents in parallel (`subagent_type: "general-purpose"`, `mode: "bypassPermissions"`, `run_in_background: true`). Both work in the same worktree since they're writing separate design docs (no conflict risk).
 
+**Do NOT shut down the design agents until the design PR has been approved and merged.** They must remain available to address PR feedback from the user.
+
 **Coder Agent** — writes the implementation design:
 
 The coder's prompt MUST instruct them to:
+
 - Work in `/tmp/<story>-design`
 - Claim their beads design task
 - Read the architecture docs, existing code, and types relevant to the story
@@ -75,6 +149,7 @@ The coder's prompt MUST instruct them to:
 **Tester Agent** — writes the test plan:
 
 The tester's prompt MUST instruct them to:
+
 - Work in `/tmp/<story>-design`
 - Claim their beads design task
 - Read the architecture docs, existing code, existing tests, and the story's acceptance criteria
@@ -94,6 +169,7 @@ The tester's prompt MUST instruct them to:
 ### Design Feedback Loop
 
 The agents should exchange feedback via SendMessage:
+
 1. Coder sends implementation design to tester
 2. Tester sends test plan to coder
 3. Each reviews the other's doc and sends feedback
@@ -103,19 +179,32 @@ The agents should exchange feedback via SendMessage:
 ### Design PR
 
 Once both design docs are committed:
+
 1. Push the branch and create a PR with both design docs
 2. PR body should summarize the design decisions and link to the beads issue
 3. Close the PR beads task — it's now gated on user review
 
 **PAUSE HERE.** Notify the user that the design PR is ready for review. Wait for:
+
 - User approval (PR merged) → proceed to Phase 2
-- User feedback (PR comments) → relay feedback to the coder and tester agents (re-launch if needed) for iteration, then update the PR
+- User feedback (PR comments) → relay feedback to agents using the PR Feedback Relay process below, then update the PR
+
+### PR Feedback Relay (Design)
+
+When the user leaves comments on the design PR, re-launch the coder and tester agents (if not still running) and instruct each to:
+
+1. **Read the PR comments** — Use `gh pr view <pr-number> --comments` to read all comments on the PR. Understand what the reviewer is asking for.
+2. **Address the issues** — Make the appropriate changes to their design document (implementation design or test plan) based on the feedback. Commit the changes to the design branch.
+3. **Reply to each comment** — Use `gh pr comment <pr-number> --body "<response>"` to reply on the PR with their resolution. Each agent MUST identify themselves in their reply (e.g., "[Coder Agent] Fixed the approach section to..." or "[Tester Agent] Updated the test plan to...") so the reviewer knows which agent addressed which feedback.
+
+After both agents have addressed all comments, notify the user that the PR has been updated and is ready for re-review.
 
 ## Phase 2: TDD Implementation
 
 ### Setup
 
 1. Create beads subtasks and link them as children of `$ARGUMENTS`:
+
    ```bash
    bd create --title="Implement: <story>" --description="<details, reference design doc>" --type=task --priority=1
    bd dep add <impl-id> $ARGUMENTS --type=parent-child
@@ -124,7 +213,7 @@ Once both design docs are committed:
    bd dep add <test-id> $ARGUMENTS --type=parent-child
    ```
 
-2. After the design PR is merged, clean up the design worktree and create a new **implementation branch** from main:
+2. After the design PR is merged, **shut down the design agents** (they are no longer needed), clean up the design worktree, and create a new **implementation branch** from main:
    ```bash
    git worktree remove /tmp/<story>-design
    git pull origin main
@@ -139,6 +228,7 @@ Launch two agents in parallel. Both work in the same worktree — coordinate via
 **Coder Agent** — implements with TDD discipline:
 
 The coder's prompt MUST instruct them to:
+
 - Work in `/tmp/<story>-impl`
 - Read the implementation design doc and test plan first
 - Claim their beads implementation task
@@ -158,6 +248,7 @@ The coder's prompt MUST instruct them to:
 **Tester Agent** — develops integration and e2e tests:
 
 The tester's prompt MUST instruct them to:
+
 - Work in `/tmp/<story>-impl`
 - Read the test plan first
 - Claim their beads test task
@@ -174,6 +265,7 @@ The tester's prompt MUST instruct them to:
 ### Implementation Coordination
 
 The coder and tester coordinate via SendMessage:
+
 1. Coder completes a unit → notifies tester with what's ready
 2. Tester writes integration/e2e tests for that unit → notifies coder of any issues found
 3. Coder fixes issues → notifies tester
@@ -189,6 +281,7 @@ Group the 7 review areas into 3 focused agents:
 ### Review Agent 1: Style, Formatting, and Cruft (Areas 1, 5, 6)
 
 **Area 1 — Coding Style:**
+
 - Consistent naming (camelCase for vars/functions, PascalCase for types/interfaces)
 - Idiomatic TypeScript (proper types, no unnecessary `any`, good generics use)
 - Clean imports (no unused, consistent ordering)
@@ -196,23 +289,27 @@ Group the 7 review areas into 3 focused agents:
 - Readability
 
 **Area 5 — Debugging Cruft:**
+
 - Remove stray `console.log` not part of intentional output
 - Remove commented-out code
 - Remove temporary files, scratch code, TODO comments that should be issues
 - Check for leftover debugging flags
 
 **Area 6 — Consistent Formatting:**
+
 - Indentation, semicolons, quotes, trailing commas, brace style, line length
 
 ### Review Agent 2: Efficiency and Error Handling (Areas 2, 4)
 
 **Area 2 — Efficiency and Algorithm Appropriateness:**
+
 - No Rube Goldberg solutions
 - Appropriate data structures
 - No unnecessary allocations, redundant iterations, or O(n^2) where O(n) is possible
 - No shortcuts that sacrifice correctness
 
 **Area 4 — Robust Error Handling:**
+
 - Network failures, malformed input, empty input
 - Null/undefined guards
 - Consistent error handling pattern
@@ -222,11 +319,13 @@ Group the 7 review areas into 3 focused agents:
 ### Review Agent 3: Types/Lint and Test Coverage (Areas 3, 7)
 
 **Area 3 — Error/Warning Cleanup:**
+
 - Run `tsc --noEmit` and report errors
 - Run the test suite and report failures — **execute the tests and include the output**
 - Check for `@ts-ignore`, `@ts-expect-error`, `as any`
 
 **Area 7 — Functional Test Coverage:**
+
 - Boundary conditions (empty, single, very large)
 - Error conditions
 - 0, 1, and many instances
@@ -241,6 +340,7 @@ Group the 7 review areas into 3 focused agents:
 ### Review Output Format
 
 Each reviewer rates issues as:
+
 - **MUST FIX**: Genuinely problematic (not a nitpick)
 - **NITPICK**: Minor style preference
 
@@ -270,11 +370,22 @@ Only MUST FIX items are reported (with file:line citations).
    - Review status (rounds completed, all clean)
 3. Notify the user the implementation PR is ready for review.
 
-**PAUSE HERE.** Wait for user approval. Relay any PR feedback to agents for fixes.
+**PAUSE HERE.** Wait for user approval. If the user leaves PR comments, use the PR Feedback Relay process below.
+
+### PR Feedback Relay (Implementation)
+
+When the user leaves comments on the implementation PR, re-launch the coder and tester agents (if not still running) and instruct each to:
+
+1. **Read the PR comments** — Use `gh pr view <pr-number> --comments` to read all comments on the PR. Understand what the reviewer is asking for.
+2. **Address the issues** — Make the appropriate code or test changes based on the feedback. Run the full test suite to ensure nothing is broken. Commit the fixes to the implementation branch.
+3. **Reply to each comment** — Use `gh pr comment <pr-number> --body "<response>"` to reply on the PR with their resolution. Each agent MUST identify themselves in their reply (e.g., "[Coder Agent] Refactored the handler to..." or "[Tester Agent] Added missing edge case test for...") so the reviewer knows which agent addressed which feedback.
+
+After both agents have addressed all comments, notify the user that the PR has been updated and is ready for re-review.
 
 ## Phase 6: Resolution
 
 Once the user approves and merges the PR:
+
 1. Close all remaining beads subtasks.
 2. **Do NOT close the parent beads issue** — gate on explicit user approval.
 

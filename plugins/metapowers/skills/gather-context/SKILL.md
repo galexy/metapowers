@@ -10,27 +10,23 @@ agent: Explore
 
 Gather full context for beads issue `$ARGUMENTS` by exploring the codebase and referenced documents, then store a structured context summary in the issue notes.
 
-```dot
-digraph gather_context {
-  rankdir=TB
-  node [shape=box style=rounded]
+```mermaid
+flowchart TB
+  bd_show["bd show issue"]
+  claimable{"Claimable?"}
+  error["Error: not claimable"]
+  has_context{"Has task_context?"}
+  explore["Explore codebase\n& referenced docs"]
+  store["Store brief\nin issue notes"]
+  claim["Claim & Report"]
 
-  bd_show [label="bd show issue"]
-  claimable [label="Claimable?" shape=diamond]
-  error [label="Error: not claimable" shape=plaintext]
-  has_context [label="Has <task_context>?" shape=diamond]
-  explore [label="Explore codebase\n& referenced docs"]
-  store [label="Store brief\nin issue notes"]
-  claim [label="Claim & Report"]
-
-  bd_show -> claimable
-  claimable -> error [label="no"]
-  claimable -> has_context [label="yes"]
-  has_context -> claim [label="yes"]
-  has_context -> explore [label="no"]
-  explore -> store
-  store -> claim
-}
+  bd_show --> claimable
+  claimable -- "no" --> error
+  claimable -- "yes" --> has_context
+  has_context -- "yes" --> claim
+  has_context -- "no" --> explore
+  explore --> store
+  store --> claim
 ```
 
 ---
