@@ -115,19 +115,19 @@ Ensure the bug is tracked in both beads and GitHub and that the two are linked.
 
 ## Phase 1: Context Gathering
 
-Invoke the `gather-context` skill explicitly using the Skill tool:
+Invoke the `gather-context` skill in a separate Explore agent using the Agent tool:
 
 ```
-Skill(
-  name: "gather-context",
-  arguments: "$ARGUMENTS",
+Agent(
+  description: "Gather context for $ARGUMENTS",
+  prompt: "/gather-context $ARGUMENTS",
   subagent_type: "Explore"
 )
 ```
 
 This runs in a separate Explore agent context and stores a `<task_context>` brief in the beads issue notes.
 
-Confirm the skill reports that context was stored in the issue before proceeding to Phase 2.
+Confirm the agent reports that context was stored in the issue before proceeding to Phase 2.
 
 ---
 
@@ -152,19 +152,19 @@ Confirm the skill reports that context was stored in the issue before proceeding
 
 ### Run Investigation
 
-Invoke the `investigate-bug` skill explicitly using the Skill tool:
+Invoke the `investigate-bug` skill in a debugger agent using the Agent tool:
 
 ```
-Skill(
-  name: "investigate-bug",
-  arguments: "$ARGUMENTS",
+Agent(
+  description: "Investigate bug $ARGUMENTS",
+  prompt: "/investigate-bug $ARGUMENTS",
   subagent_type: "metapowers:debugger"
 )
 ```
 
 This runs in a forked debugger agent context. The debugger will reproduce the bug, investigate the root cause, produce a Root Cause Analysis, commit it to `.specs/<bug>/root-cause-analysis.md`, and record findings in both beads issue notes and the linked GitHub issue.
 
-Confirm the skill reports that investigation is complete. Close the investigation beads subtask after the skill completes.
+Confirm the agent reports that investigation is complete. Close the investigation beads subtask after the agent completes.
 
 ### Evaluate Investigation Outcome
 

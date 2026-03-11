@@ -80,19 +80,19 @@ Run `bd show $ARGUMENTS` and verify the following before proceeding. If any requ
 
 ## Phase 0: Context Gathering
 
-Invoke the `gather-context` skill explicitly using the Skill tool:
+Invoke the `gather-context` skill in a separate Explore agent using the Agent tool:
 
 ```
-Skill(
-  name: "gather-context",
-  arguments: "$ARGUMENTS",
+Agent(
+  description: "Gather context for $ARGUMENTS",
+  prompt: "/gather-context $ARGUMENTS",
   subagent_type: "Explore"
 )
 ```
 
 This runs in a separate Explore agent context and stores a `<task_context>` brief in the beads issue notes.
 
-Confirm the skill reports that context was stored in the issue before proceeding to Phase 1.
+Confirm the agent reports that context was stored in the issue before proceeding to Phase 1.
 
 ## Phase 1: Design Collaboration
 
