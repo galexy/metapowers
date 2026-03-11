@@ -1,6 +1,6 @@
 {
   "name": "metapowers",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "description": "A framework for an agent driven SDLC that allows for process customization",
   "author": {
     "name": "Galex Yen",
